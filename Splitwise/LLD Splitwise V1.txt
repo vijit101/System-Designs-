@@ -1,0 +1,96 @@
+Problem Statement - 
+A system that allows users to split the bill /expenses  money share between each other 	
+
+Requirement - 
+- A user can register themselves (login)
+- make a new split by name say " goa trip expenses" (split)
+- Ability to add his / her friends (invite friends)
+- Ability for every user to add expense and split 
+- business layer to do calculations on split 
+- reminder to pay 
+- Settle debt 
+
+
+class diagram - 
+
+user class - 
+userid string 
+name string 
+emailid email[]
+splitList String array [ split id ]
+picture bytes[]
+totalmoneyborrowed int
+totalmoneyowed int
+frindlist array [userid]
+allTransactions array [moneyCalculations] - all users know their groups and what they owe to whom can be converted to hashmap key be split id and value be money calculation  
+
+class splitInfo - 
+splitid string 
+splitname string 
+split currency enum
+split date 
+members string array [userid]
+noofmembers int 
+expenseList array [Expenses]
+allTransactions array [moneyCalculations]- every group knows its own transactions 
+grpCreatedby string userid
+createddate datetime
+
+
+
+class moneyCalculations - 
+moneycalcid 
+amtmoneyowed int
+moneyowedto string (holds user id )
+amtmoneylent int
+moneylentto string (holds user id )
+splitgrpID string (splitid)
+expenseid string (expenseid)
+
+class Expenses - 
+expense id string 
+expenseName string
+expenseamt int
+expenseAddedby string (holds user id )
+expensePaidby string (userid)
+Splitgrpid string (which split does the expense belong to )
+
+one thing here i can do is as both user and splitgroup / splitinfo needs to know about  moenycalculations i can make a new class with id and array of moneycalc then link both user and splitinfo to that id 
+
+Relationships - 
+one splitinfo many users 
+one expense one splitinfo/group 
+one user many splitinfo/group
+one user many transactions 
+one group many moneycalculations  
+one group many moneycalculations
+one user multiple friends 
+
+Design patterns - 
+State machine as this pattern can help me maintain a stable state for all transitions as a transition is atomic either happens or not 
+
+observer - can use observer to observe and update all expense based on event trigger 
+
+mvc for background differentiation of controllers etc . 
+
+Service Layer - 
+ExpenseService
+- addExpense(paidBy, amount, List<SplitInfo>, strategy)
+- getBalanceSheet(userId)
+
+GroupService
+- createGroup(name, List<User>)
+
+Invite users service 
+- InviteSplitMembers(Splitid)
+- InviteFriends(userid)
+
+Calculation Service 
+- CalculateSpend(userid,moneycalculation)
+
+sendReminder 
+- sendreminderTomembers(splitid)
+
+Data flow - 
+
+user register(user class create user) -> creates a new split (splitinfo create splitgroup) -> creates a new expense (new expense added to splitgroup) -> expense calculated(moneycalculation class used and calculation saved for all splits )-> split visible in group -> sendnotification to other members apart from creator 
