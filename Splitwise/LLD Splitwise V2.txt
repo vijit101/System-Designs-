@@ -1,0 +1,171 @@
+📌 Problem Statement
+A system that allows users to split expenses with friends and track who owes whom. Designed to support group-based expense management like trips, events, or shared purchases.
+
+✅ Core Functional Requirements
+User registration & login
+
+Create and name expense groups (e.g., “Goa Trip”)
+
+Invite friends to groups
+
+Add expenses within a group, with split logic (equal, percentage, etc.)
+
+Calculate who owes how much to whom
+
+Send payment reminders
+
+Settle debts
+
+⚙️ Class Design
+User
+class User {
+  string userId;
+  string name;
+  string email;
+  string picture; // base64 or URL
+  List<string> friendList; // List of userIds
+  Map<string, UserStats> statsPerGroup; // key: splitId
+
+  // Optional precomputed summary for dashboard
+  int totalMoneyBorrowed;
+  int totalMoneyLent;
+}
+🔹 UserStats is a light summary class holding balance info per group
+🔹 We use a Map<splitId, stats> instead of all transactions in the user directly
+
+SplitGroup (aka SplitInfo)
+
+class SplitGroup {
+  string splitId;
+  string splitName;
+  CurrencyEnum currency;
+  Date createdDate;
+  string createdBy; // userId
+  List<string> members; // userIds
+  List<Expense> expenses;
+  List<Transaction> transactions;
+}
+🔹 Transaction is the new name for moneyCalculations
+🔹 Group now owns the source of truth for transactions
+
+Expense
+class Expense {
+  string expenseId;
+  string name;
+  int amount;
+  string addedBy; // userId
+  string paidBy; // userId
+  string groupId;
+  ExpenseState state; // e.g., PENDING, SETTLED
+}
+Transaction
+ts
+Copy
+Edit
+class Transaction {
+  string transactionId;
+  string fromUserId;
+  string toUserId;
+  int amount;
+  string expenseId;
+  string groupId;
+}
+🔹 Clear debt direction: A → owes → B
+🔹 One transaction = one directional obligation
+
+UserStats (Light summary per group for quick dashboard)
+
+class UserStats {
+  int totalOwed;
+  int totalLent;
+  List<Transaction> myTransactions;
+}
+🔗 Relationships Recap
+1 SplitGroup → many Users
+
+1 SplitGroup → many Expenses
+
+1 Expense → many Transactions
+
+1 User → many SplitGroups (via statsPerGroup)
+
+1 User → many Transactions
+
+🎯 Design Patterns Used
+
+State Machine on Expense.state to enforce legal transitions (Pending → Settled)
+
+(Optional) Observer could notify users after a new expense is added (currently handled by JS events / message queue)
+
+MVC Layering:
+
+Controllers (REST interface)
+
+Services (Business logic)
+
+Models (Entity classes above)
+
+🧠 Services Layer
+ExpenseService
+addExpense(userId, groupId, ExpensePayload)
+
+calculateSplit(Expense)
+
+getExpensesByGroup(groupId)
+
+settleExpense(expenseId)
+
+GroupService
+createGroup(userId, groupName)
+
+addUserToGroup(groupId, userId)
+
+getGroupSummary(groupId)
+
+UserService
+registerUser(payload)
+
+getDashboard(userId)
+
+getFriendList(userId)
+
+TransactionService
+getBalanceSheet(userId)
+
+getTransactions(groupId)
+
+sendReminder(groupId, userId)
+
+📊 Data Flow
+text
+Copy
+Edit
+User registers →
+  Creates SplitGroup →
+    Invites members →
+      Adds expense →
+        System calculates split →
+          Transactions created →
+            User stats updated →
+              Optionally: reminders sent to others
+💡 Edge Cases (Handled or Acknowledged)
+User can’t leave group until settled
+
+Only group creator can delete group or expenses
+
+Partial payments not supported yet — workaround via new micro-split groups
+
+Duplicate user in group avoided at creation
+
+No negative expense amounts allowed
+
+Group/expense/transaction modification requires role-based access control
+
+🔐 Optional Enhancements (For Future)
+Credit scoring layer on top of user stats
+
+Gamified achievements (Observer would be great here)
+
+Push/email reminders using background job workers
+
+Full audit log of state transitions (FSM logs)
