@@ -1,0 +1,166 @@
+📌 Problem Statement
+A system that allows you to book tickets for movies that are available on theatres 
+
+✅ Core Functional Requirements
+User registration & login
+Search for latest movies 
+Location based nearest theatre and movie list 
+Time and movie and seat selection 
+transaction system 
+purchase ticket 
+e ticket emailed  
+
+⚙️ Class Design
+User
+class User {
+  string userId;
+  string name;
+  string email; // to send etickets 
+  string picture; // base64 or URL
+  
+Movie Details 
+
+class MovieDetails {
+  string Movieid;
+  string MovieName;
+  TheatreDetails[] AvailableonAlltheatre ;
+  String DateofRelease ;
+  String rating ;
+  String genre ;
+  time lengthofMovieMins; 
+  String [] Movie Cast; 
+  Languages[] MovieLanguages;
+  bool isEnglishSubs; 
+  String[] Hallids;
+
+}
+
+Class theatreDetails {
+string theatreid 
+Location Theatrelocation 
+string theatrename 
+MovieDetails[] allMoviesAvailable,
+int Total Halls,
+hallDetail[] HallDetails,
+Bool IsPVR,
+Bool IsFoodcourt,
+Bool IsDolbyAtmos,
+
+}
+
+Class Location{
+string Address 
+string GmapUrl
+String Locality 
+String State 
+String Pincode 
+DirectionalZone DirectionalDistrict
+}
+
+- can search the theatre through location Direction and pincode as that is a core feature to set the app apart from competition 
+- Enabled search Movie Location wise as well 
+- Generally people look at suggestions to book movies they dont remember movie names hence we can request location in app / online and then show them theatres near them with movie list 
+- Search via location/Movie or search via movie then filter location or visa versa that is why n to n relation 
+
+
+Enum Languages{
+0 = hindi , 1 = English , 2 = French , etc  
+}
+
+Enum DirectionalZone{
+0= center , 1=north , 2=south , 3= west etc 
+}
+
+Enum Seatview{
+0= Balcony , 1 = middle , 2 = Front 
+}
+
+Class Seat{
+String seatId,
+String SeatName,
+int SeatPrice,
+SeatView seatView,
+bool isReclinerSeat,
+
+}
+
+Class HallDetail{
+
+string Hallid, 
+String hallName, 
+int TotalSeatsInhall,
+seats[] SeatData,
+String MovieId; // which movie is streaming in this hall 
+Datetime DateofScreening;
+Datetime TimeOfScreening;
+String NoofSeatsBooked;
+String ParentTheatreId;
+ 
+}
+
+
+
+Class Cart{
+string theatreId,
+string movieId,
+string userId,
+string HallId, // will be used to get time and date of screening 
+string numberOfTickets, 
+int finalPrice,
+string[] SeatIds,
+
+
+}
+
+* Assuming we are using API's to get Theatre hall and movie info as generally the theatre and hall info will be same which will be around say per theatre max 10-30 halls hence it does not need scalability there. It needs be fast in compound filtering's 
+
+
+🎯 Design Patterns Used
+
+State Machine on Expense.state to enforce legal transitions (Pending → Settled) 
+
+MVC Layering:
+
+Controllers (REST interface)
+
+Services (Business logic)
+
+Models (Entity classes above)
+
+🧠 Services Layer
+Already gave an idea of it on the class level 
+
+📊 Data Flow
+
+User registers →
+  flow 1
+  can search for movies   →
+    apply filters for nearest theatres  →
+      getTheatre Details  →
+        System Get Hall Details  →
+          Book Seat →
+            Add seat ,movie info , user , hall etc to cart →
+              Buy 
+   flow 2 - 
+   user allows location access -> 
+      user can see recommendation on nearest theatre -> 
+            Can filter by Movie Name -> 
+                 getTheatre Details  →
+        System Get Hall Details  →
+          Book Seat →
+            Add seat ,movie info , user , hall etc to cart →
+              Buy 
+   Flow 3 - User Filters by dAte and time -> 
+            load Hall details -> 
+                 load theatre details & seat Details & Movie details  -> 
+                      buy 
+
+💡 Edge Cases (Handled or Acknowledged)
+User can leave mid booking which resets and he needs book again 
+
+Racing condition if two users book together then when a person enter ticket into cart its for 5 mins considered booked like a mutex 
+
+No negative seats allowed no previous day booking allowed 
+
+
+🔐 Optional Enhancements (For Future)
